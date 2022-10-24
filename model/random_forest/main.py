@@ -61,7 +61,7 @@ def main():
     X = f["X"]
     y = f["y"]
     id = f["id"]
-    
+
     region = np.array([i.split("-")[0] for i in id])
     is_accra = region == "accra_20181031"
     is_durban = region == "durban_20190424"
