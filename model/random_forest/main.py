@@ -1,5 +1,6 @@
 import sys
-sys.path.append("/home/marc/projects/marinedetector")
+sys.path.append("/home/sushen/marine_debris_semester_project")
+print(sys.path)
 
 from data.marinedebrisdatamodule import MarineDebrisDataModule
 from visualization import rgb, fdi, ndvi
@@ -27,10 +28,10 @@ from matplotlib import colors
 from matplotlib import cm
 
 def main():
-    root = "/data/marinedebris/results/kikaki/randomforest"
+    root = "/data/sushen/marinedebris"
     N_images = 100000
 
-    dm = MarineDebrisDataModule("/data/marinedebris", no_label_refinement=True)
+    dm = MarineDebrisDataModule("/data/sushen/marinedebris", no_label_refinement=True)
     dm.setup("fit")
 
     extract_and_save_features(root, dm, N_images=N_images)
@@ -60,6 +61,7 @@ def main():
     X = f["X"]
     y = f["y"]
     id = f["id"]
+    
     region = np.array([i.split("-")[0] for i in id])
     is_accra = region == "accra_20181031"
     is_durban = region == "durban_20190424"
@@ -107,6 +109,7 @@ def main():
     path = "/data/marinedebris/results/kikaki/randomforest/plp2022"
     qual_test_dataset = dm.get_plp_dataset(2022, output_size=64)
     write_qualitative(rf_classifier, qual_test_dataset, path, cut_border=16, optimal_threshold=optimal_threshold)
+
 def write_qualitative(rf_classifier, qual_test_dataset, path, cut_border=0, optimal_threshold=0.5):
     os.makedirs(path, exist_ok=True)
 
@@ -227,31 +230,106 @@ def extract_and_save_features(root, dm, N_images = 10000, N_pts = 5):
 
         np.savez(train_path, X=X, y=y, id=id)
 
-    if not os.path.exists(val_path):
-        valid_dataset = dm.valid_dataset
-        X_val, y_val, id_val = [],[],[]
-        for img, mask, id in tqdm(valid_dataset):
-            X_val.append(extract_feature_center(img))
-            y_val.append(mask)
-            id_val.append(id)
+    # if not os.path.exists(val_path):
+    #     valid_dataset = dm.valid_dataset
+    #     X_val, y_val, id_val = [],[],[]
+    #     for img, mask, id in tqdm(valid_dataset):
+    #         X_val.append(extract_feature_center(img))
+    #         y_val.append(mask)
+    #         id_val.append(id)
 
-        X = np.nan_to_num(np.vstack(X_val))
-        y = np.hstack(y_val)
-        id = np.hstack(id_val)
-        np.savez(val_path, X=X, y=y, id=id)
+    #     X = np.nan_to_num(np.vstack(X_val))
+    #     y = np.hstack(y_val)
+    #     id = np.hstack(id_val)
+    #     np.savez(val_path, X=X, y=y, id=id)
 
-    if not os.path.exists(test_path):
-        test_dataset = dm.test_dataset
-        X_test, y_test, id_test = [], [], []
-        for img, mask, id in tqdm(test_dataset):
-            X_test.append(extract_feature_center(img))
-            y_test.append(mask)
-            id_test.append(id)
+    # if not os.path.exists(test_path):
+    #     test_dataset = dm.test_dataset
+    #     X_test, y_test, id_test = [], [], []
+    #     for img, mask, id in tqdm(test_dataset):
+    #         X_test.append(extract_feature_center(img))
+    #         y_test.append(mask)
+    #         id_test.append(id)
 
-        X = np.nan_to_num(np.vstack(X_test))
-        y = np.hstack(y_test)
-        id = np.hstack(id_test)
-        np.savez(test_path, X=X, y=y, id=id)
+    #     X = np.nan_to_num(np.vstack(X_test))
+    #     y = np.hstack(y_test)
+    #     id = np.hstack(id_test)
+    #     np.savez(test_path, X=X, y=y, id=id)
+
+def spectral_signature_extraction():
+    
+    mapping = s2_mapping
+    h5_prefix = 'dataset'
+    
+    # Get patches files without _cl and _conf associated files
+    patches = glob(os.path.join(options['path'], 'patches', '*/*.tif'))
+        
+    patches = [p for p in patches if ('_cl.tif' not in p) and ('_conf.tif' not in p)]
+
+    # Read splits
+    X_train = np.genfromtxt(os.path.join(options['path'], 'splits','train_X.txt'),dtype='str')
+    
+    X_val = np.genfromtxt(os.path.join(options['path'], 'splits','val_X.txt'),dtype='str')
+    
+    X_test = np.genfromtxt(os.path.join(options['path'], 'splits','test_X.txt'),dtype='str')
+    
+    dataset_name = os.path.join(options['path'], h5_prefix + '_nonindex.h5')
+    hdf = pd.HDFStore(dataset_name, mode = 'w')
+    
+    # For each patch extract the spectral signatures and store them
+    for im_name in tqdm(patches):
+
+        # Get date_tile_image info
+
+        img_name = '_'.join(os.path.basename(im_name).split('.tif')[0].split('_')[1:4])
+        
+        # Generate Dataframe from Image
+        if img_name in X_train:
+            split = 'train'
+            temp = ImageToDataframe(im_name, mapping)
+        elif img_name in X_val:
+            split = 'val'
+            temp = ImageToDataframe(im_name, mapping)
+        elif img_name in X_test:
+            split = 'test'
+            temp = ImageToDataframe(im_name, mapping)
+        else:
+            raise AssertionError("Image not in train,val,test splits")
+        
+        # Update Satellite and Date info
+        temp['Date'] = os.path.splitext(os.path.basename(im_name))[0].split('_')[1]
+        temp['Tile'] = os.path.splitext(os.path.basename(im_name))[0].split('_')[2]
+        temp['Image'] = os.path.splitext(os.path.basename(im_name))[0].split('_')[3]
+        # Store data
+        hdf.append(split, temp, format='table', data_columns=True, min_itemsize={'Class':27,
+                                                                                 'Confidence':8,
+                                                                                 'Date':8,
+                                                                                 'Image':3,
+                                                                                 'Tile':5})
+    
+    hdf.close()
+    
+    # Read the stored file and fix an indexing problem (indexes were not incremental and unique)
+    hdf_old = pd.HDFStore(dataset_name, mode = 'r')
+    
+    df_train = hdf_old['train'].copy(deep=True)
+    df_val = hdf_old['val'].copy(deep=True)
+    df_test = hdf_old['test'].copy(deep=True)
+    
+    df_train.reset_index(drop = True, inplace = True)
+    df_val.reset_index(drop = True, inplace = True)
+    df_test.reset_index(drop = True, inplace = True)
+
+    hdf_old.close()
+    
+    # Store the fixed table to a new dataset file
+    dataset_name_fixed = os.path.join(options['path'], h5_prefix+'.h5')
+
+    df_train.to_hdf(dataset_name_fixed, key='train', mode='a', format='table', data_columns=True)
+    df_val.to_hdf(dataset_name_fixed, key='val', mode='a', format='table', data_columns=True)
+    df_test.to_hdf(dataset_name_fixed, key='test', mode='a', format='table', data_columns=True)
+    
+    os.remove(dataset_name)
 
 def extract_feature_image(img):
     indices = calculate_indices(img)
