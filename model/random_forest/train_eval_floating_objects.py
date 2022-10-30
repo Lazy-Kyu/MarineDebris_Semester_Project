@@ -20,16 +20,14 @@ import cv2 as cv
 import numpy as np
 import pandas as pd
 from tqdm import tqdm
-from IPython.display import display
 from joblib import dump, load
 from os.path import dirname as up
 
-
 sys.path.append(up(os.path.abspath(__file__)))
-from random_forest import rf_classifier, bands_mean
+from random_forest import get_random_forest, bands_mean
 
 sys.path.append(os.path.join(up(up(up(os.path.abspath(__file__)))), 'utils'))
-from assets import conf_mapping, cat_mapping_vec
+from assets_marida import conf_mapping, cat_mapping_vec
 
 random.seed(0)
 np.random.seed(0)
@@ -84,6 +82,7 @@ def main(options):
     logging.info('Started training')
     
     start_time = time.time()
+    rf_classifier = get_random_forest()
     rf_classifier.fit(X_train, y_train, **dict(rf__sample_weight=weight_train))
     
     print("Training finished after %s seconds" % (time.time() - start_time))

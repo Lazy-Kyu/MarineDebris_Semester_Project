@@ -21,7 +21,7 @@ from os.path import dirname as up
 root_path = up(up(os.path.abspath(__file__)))
 
 sys.path.append(os.path.join(root_path, 'utils'))
-from assets import s2_mapping, cat_mapping, conf_mapping, indexes_mapping, texture_mapping
+from marine_debris_semester_project.utils.assets_marida import s2_mapping, cat_mapping, conf_mapping, indexes_mapping, texture_mapping
 
 rev_cat_mapping = {v:k for k,v in cat_mapping.items()}
 rev_conf_mapping = {v:k for k,v in conf_mapping.items()}
@@ -186,7 +186,7 @@ if __name__ == "__main__":
     parser = argparse.ArgumentParser()
 
     # Options
-    parser.add_argument('--path', default=os.path.join(root_path, 'data'), help='Path to dataset')
+    parser.add_argument('--path', default=data_path, help='Path to dataset')
     parser.add_argument('--type', default='s2', type=str, help=' Select between s2, indices or texture for Spectral Signatures, Produced Indices or GLCM Textures, respectively')
 
     args = parser.parse_args()
