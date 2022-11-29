@@ -54,7 +54,7 @@ def fdi(band6, band8, band10):
     return band8 - r_acc
 
 def si(band2, band3, band4):
-    return ((1-band2)*(1-band3)*(1-band4))**(1/3)
+    return ((10000-band2)*(10000-band3)*(10000-band4))**(1/3)
 
 def ndwi(band3, band8):
     return (band3 - band8)/(band3 + band8)

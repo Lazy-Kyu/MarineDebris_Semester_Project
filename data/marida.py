@@ -6,7 +6,7 @@ import rasterio as rio
 import pandas as pd
 from rasterio.features import rasterize
 import numpy as np
-from data.utils import read_tif_image, pad
+from data.utils_file import read_tif_image, pad
 import torch
 
 # regions where we could not re-download the corresponding tif image
@@ -121,7 +121,7 @@ class MaridaRegionDataset(Dataset):
          self.data_transform = data_transform
          self.region = region
          self.classification = classification
-
+        # use image size = 32
          tile = region[-5:]
 
          gdf = gpd.read_file(os.path.join(path, "shapefiles", region + ".shp"))
@@ -217,15 +217,13 @@ if __name__ == '__main__':
     #ds = MaridaRegionDataset(path="/data/marinedebris/MARIDA", region="S2_28-9-20_16PCC")
     #ds[14]
 
-
-
-    ds = MaridaDataset(path="/ssd/marinedebris/MARIDA", fold="train")
+    ds = MaridaDataset(path='/data/sushen/marinedebris/MARIDA', fold="train")
     print(len(ds))
 
-    ds = MaridaDataset(path="/ssd/marinedebris/MARIDA", fold="val")
+    ds = MaridaDataset(path='/data/sushen/marinedebris/MARIDA', fold="val")
     print(len(ds))
 
-    ds = MaridaDataset(path="/ssd/marinedebris/MARIDA", fold="test")
+    ds = MaridaDataset(path='/data/sushen/marinedebris/MARIDA', fold="test")
     print(len(ds))
 
     import matplotlib.pyplot as plt

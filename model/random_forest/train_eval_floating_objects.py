@@ -124,8 +124,7 @@ def main(options):
     sz2 = image.shape[1]
 
     # Remove bands 9 and 10 like MARIDA images, c.f bands at https://hatarilabs.com/ih-en/how-many-spectral-bands-have-the-sentinel-2-images
-    image = np.delete(image, 9, 2)
-    image = np.delete(image, 10, 2)
+    image = np.delete(image, [9, 10], 2)
 
     # Scaling verification
     # for band in np.arange(11):

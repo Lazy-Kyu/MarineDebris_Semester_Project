@@ -5,7 +5,7 @@ import os
 import rasterio as rio
 import pandas as pd
 import numpy as np
-from data.utils import read_tif_image
+from data.utils_file import read_tif_image
 from rasterio import features
 
 REGIONS = [

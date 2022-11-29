@@ -1,0 +1,117 @@
+import glob
+import geopandas as gpd
+import os
+import sys
+import rasterio as rio
+from rasterio.features import rasterize
+import rasterio.windows
+import pandas as pd
+import numpy as np
+from tqdm import tqdm
+from joblib import load
+
+sys.path.append('/home/sushen/marine_debris_semester_project')
+# from model.random_forest.random_forest import get_random_forest
+
+from feature_extraction import calculate_indices, calculate_texture
+
+def main():
+
+    # Folder contents paths
+    list_tif = glob.glob("/data/sushen/marinedebris/floatingobjects/scenes/*.tif")
+    list_shp = glob.glob("/data/sushen/marinedebris/floatingobjects/shapefiles/*.shp")
+    output_path = '/data/sushen/marinedebris/project/floObj_new_shapefiles'
+
+    # Remove l2a files
+    list_tif = [ x for x in list_tif if "l2a" not in x ]
+
+    # Random forest Classifier
+    cl_path = '/data/sushen/marinedebris/project/rf_classifier.joblib'
+    rf_classifier = load(cl_path)
+
+    continue_counter = 0
+    # for image_index in tqdm(np.arange(len(list_tif))):
+    # have to ignore "lagos_20200505.shp" (index 6 in list) as I can't figure out why it isn't working
+    for image_index in tqdm(np.arange(7, len(list_tif))): 
+        # Locate path of scene and their shapefiles from the lists
+        tif_file_path = list_tif[image_index]
+        shp_file_path = list_shp[image_index]
+
+        shp_filename = os.path.basename(shp_file_path)
+        print(shp_filename)
+        output_shp_file_path = os.path.join(output_path, shp_filename)
+
+        # Rasterio Image opening
+        with rio.open(tif_file_path, "r") as src:
+            crs = src.crs
+            transform = src.transform
+
+        # Open geopandas dataframe and use corresponding CRS
+        gdf = gpd.read_file(shp_file_path)
+        gdf = gdf.to_crs(crs)
+        
+        # Iterate of every geometry object and get the pixels
+        imagesize = 16*10
+        geometry_classes = []
+        
+        for j in tqdm(np.arange(len(gdf))):
+        # for j in np.arange(len(gdf)):
+            row = gdf.iloc[j]
+
+            minx, miny, maxx, maxy = row.geometry.centroid.buffer(imagesize // 2).bounds
+            window = rasterio.windows.from_bounds(minx, miny, maxx, maxy, transform = transform)
+            width = int(window.width)
+            height = int(window.height)
+
+            # Open the scene using the window
+            with rio.open(tif_file_path, "r") as src_crop:
+                    transform_crop = src_crop.window_transform(window)
+                    image_crop = src_crop.read(window=window)
+            
+            # Calculate indices & textures
+            indices = calculate_indices(image_crop)
+            textures = calculate_texture(image_crop)
+
+            # Remove unused bands and reorder axis
+            image_crop = np.delete(image_crop, [9, 10], axis = 0)
+            image_crop = np.moveaxis(image_crop, (0, 1, 2), (2, 0, 1))
+            indices = np.moveaxis(indices, (0, 1, 2), (2, 0, 1))
+            textures = np.moveaxis(textures, (0, 1, 2), (2, 0, 1))
+            
+            # Stacking features and reshaping into a 2d array of shape [#pixel, #bands]
+            features = np.dstack((image_crop, indices, textures))
+            sz1 = features.shape[0]
+            sz2 = features.shape[1]
+            features = np.reshape(features, (sz1*sz2, -1)) 
+
+            # Create a 2d mask and keep only pixels of interest
+            geometry_object = gdf.iloc[[j]].geometry
+            mask_2d = rasterize(geometry_object, all_touched=True,
+                            transform=transform_crop, out_shape=(height, width))
+
+            mask_2d = np.reshape(mask_2d, sz1*sz2)
+            bool_mask_2d = mask_2d > 0 
+            geometry_features = features[bool_mask_2d, :]
+
+            # Protection if for some odd reason list of pixels to predict is empty
+            if geometry_features.size == 0:
+                continue_counter += 1
+                geometry_classes.append(0)
+                continue
+
+            # Prediction of pixels in geometry object
+            prediction = rf_classifier.predict(geometry_features)
+            values, counts = np.unique(prediction, return_counts=True)
+            ind = np.argmax(counts)
+            predicted_class = values[ind]
+
+            # Append prediction to the list
+            geometry_classes.append(predicted_class)
+        
+        # Add predicted marida class to the GeoDataFrame and save it
+        gdf['marida_cla'] = geometry_classes # there is a 10 character limit for gpd column names
+        gdf.to_file(output_shp_file_path)
+
+    print(continue_counter)
+if __name__ == "__main__":
+    main()
