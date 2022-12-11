@@ -1,0 +1,112 @@
+# -*- coding: utf-8 -*-
+'''
+Author: Ioannis Kakogeorgiou
+Email: gkakogeorgiou@gmail.com
+Python Version: 3.7.10
+Description: train_eval.py includes the training and evaluation process for the
+             pixel-level semantic segmentation with random forest.
+'''
+
+import logging
+import os
+import random
+import sys
+import time
+from os.path import dirname as up
+
+import numpy as np
+import pandas as pd
+from joblib import dump
+
+sys.path.append(up(up(os.path.abspath(__file__))))
+from model.random_forest.random_forest import get_random_forest
+
+random.seed(0)
+np.random.seed(0)
+
+# PATHS
+root_path = up(up(up(os.path.abspath(__file__))))
+data_path = '/data/sushen/marinedebris/project'
+
+dataset_index = 1 # 0 for old classes (theirs), 1 for new classes (ours)
+
+hdf_paths = ['dataset_old_classes.h5', 'dataset_new_classes.h5']
+hdf_path = os.path.join(data_path, hdf_paths[dataset_index])
+
+cl_paths = ['rf_classifier_old_classes.joblib', 'rf_classifier_new_classes.joblib']
+cl_path = os.path.join(data_path, cl_paths[dataset_index])
+
+# Logging
+logging_paths = ['evaluation_rf_old_classes.log', 'evaluation_rf_new_classes.log']
+logging_path = os.path.join(data_path, logging_paths[dataset_index])
+
+logging.basicConfig(filename=logging_path, filemode='w',level=logging.INFO, format='%(name)s - %(levelname)s - %(message)s')
+logging.info('*'*10)
+logging.info("The dataset used is located at: " +str(hdf_path))
+logging.info("Classifier is saved at: " +str(cl_path))
+
+
+###############################################################
+# Training                                                    #
+###############################################################
+
+def main():
+
+    # Rewrite rf_features arrays to only use bands, real one must be imported from assets.py
+    rf_features = ["B1", "B2", "B3", "B4", "B5", "B6", "B7", "B8", "B8A", "B11", "B12", 
+                "NDVI", "FAI", "FDI", "SI", "NDWI", "NRD", "NDMI", "BSI",
+                "con", "dis", "homo", "ener", "cor", "asm"]
+    
+    # Load Spectral Signatures
+    
+    hdf = pd.HDFStore(hdf_path, mode = 'r') 
+    df_train = hdf.select('train')
+    hdf.close()
+
+    # print(df_train.keys())
+    # print('df_train columns : ', df_train.columns)
+    
+    # Calculate weights for each sample based on Confidence Level
+    # df_train['Weight'] = 1/df_train['Conf'].apply(lambda x: conf_mapping[x])
+    df_train['Weight'] = 1/df_train['Conf']
+    
+
+    # Remove rows with NaN and unknow labels values
+    df_train = df_train.dropna()
+    df_train = df_train.reset_index()
+
+    # Keep selected features and transform to numpy array
+    X_train = df_train[rf_features].values
+    y_train = df_train['Class'].values
+    weight_train = df_train['Weight'].values
+    
+    print('Number of Input features: ', X_train.shape[1])
+    print('Train: ',X_train.shape[0])
+    
+    print('Training X shape: ',X_train.shape)
+    print('Training y shape: ',y_train.shape)
+
+    logging.info('Number of Input features: ' + str(X_train.shape[1]))
+    logging.info('Train: ' + str(X_train.shape[0]))
+
+    # Training
+    print('Started training')
+    logging.info('Started training')
+    
+    start_time = time.time()
+    rf_classifier = get_random_forest()
+    rf_classifier.fit(X_train, y_train, **dict(rf__sample_weight=weight_train))
+    
+    print("Training finished after %s seconds" % (time.time() - start_time))
+    logging.info("Training finished after %s seconds" % (time.time() - start_time))
+    
+    dump(rf_classifier, cl_path)
+
+    # Paths printed for verification purposes
+    print('')
+    print('The dataset index is:', dataset_index, '(Old = 0, New = 1)')
+    print('The HDF file path is:', hdf_path)
+    print('The RF classifier joblib path is:', cl_path)
+    
+if __name__ == "__main__":
+    main()

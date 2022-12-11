@@ -28,11 +28,10 @@ def main():
     data_path = '/data/sushen/marinedebris/MARIDA'
     mask_id_path = '/data/sushen/marinedebris/project/masks_id'
     mask_conf_path = '/data/sushen/marinedebris/project/masks_conf'
-    hdf_path = '/data/sushen/marinedebris/project'
-
+    hdf_path = '/data/sushen/marinedebris/project/dataset_old_classes.h5'
+    
     # HDF file open
-    dataset_name = os.path.join(hdf_path, 'dataset.h5')
-    hdf = pd.HDFStore(dataset_name, mode = 'w')
+    hdf = pd.HDFStore(hdf_path, mode = 'w')
 
     for i in tqdm(np.arange(len(df_map_scenes))):
         # Locate patches and their shapefiles from the mapping table
