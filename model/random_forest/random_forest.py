@@ -21,7 +21,7 @@ def get_random_forest():
                                          min_samples_leaf=1,
                                          min_impurity_decrease=0,
                                          oob_score=True,
-                                         class_weight='balanced_subsample',
+                                         class_weight='balanced', # originally 'balanced_subsample'
                                          random_state=5,
                                          n_jobs=-1)
 

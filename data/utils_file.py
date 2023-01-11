@@ -18,6 +18,9 @@ def pad(image, mask=None, output_size=64):
                            (int(np.ceil(dw)), int(np.floor(dw)))])
 
     if mask is not None:
+        h, w = mask.shape
+        dh = (H - h) / 2
+        dw = (W - w) / 2
         mask = np.pad(mask, [(int(np.ceil(dh)), int(np.floor(dh))),
                              (int(np.ceil(dw)), int(np.floor(dw)))])
 

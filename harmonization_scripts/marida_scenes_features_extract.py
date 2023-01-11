@@ -14,6 +14,7 @@ from data.utils_file import read_tif_image, pad
 import model.random_forest.engineering_patches as eng
 
 from feature_extraction import calculate_indices, calculate_texture
+from data.utils_file import pad
 
 def main():
     df_map_scenes = pd.read_csv('/data/sushen/marinedebris/MARIDA/marida_mapping.csv')
@@ -26,9 +27,9 @@ def main():
 
     # Folder paths
     data_path = '/data/sushen/marinedebris/MARIDA'
-    mask_id_path = '/data/sushen/marinedebris/project/masks_id'
-    mask_conf_path = '/data/sushen/marinedebris/project/masks_conf'
-    hdf_path = '/data/sushen/marinedebris/project/dataset_old_classes.h5'
+    mask_id_path = '/data/sushen/marinedebris/project/marida_masks_id'
+    mask_conf_path = '/data/sushen/marinedebris/project/marida_masks_conf'
+    hdf_path = '/data/sushen/marinedebris/project/dataset_original_classes.h5'
     
     # HDF file open
     hdf = pd.HDFStore(hdf_path, mode = 'w')
@@ -109,7 +110,7 @@ def main():
             image, mask_id = pad(image, mask_id, imagesize // 10)
             _, mask_conf = pad(image, mask_conf, imagesize // 10)
             
-            # Deleting Band10 according to MARIDA paper
+            # Deleting Band9 according to MARIDA paper since read_tif_image already removes B10
             image = np.delete(image, 9, axis = 0)
 
             # Calculate indices and textures
