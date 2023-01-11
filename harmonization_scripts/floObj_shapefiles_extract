@@ -91,19 +91,19 @@ def gdf_class_prediction(gdf, tif_file_path, transform, rf_classifier):
 def main():
 
     # Indicates which RF Classifier we will use, 0 = original classes, 1 = five classes, 2 = seven classes
-    classifier_index = 2
+    classifier_index = 3
 
     # Folder contents paths
     list_tif = glob.glob("/data/sushen/marinedebris/floatingobjects/scenes/*.tif")
     list_shp = glob.glob("/data/sushen/marinedebris/floatingobjects/shapefiles/*.shp")
-    output_paths = ['/data/sushen/marinedebris/project/floObj_shapefiles_trial_1/', '/data/sushen/marinedebris/project/floObj_shapefiles_trial_2/', '/data/sushen/marinedebris/project/floObj_shapefiles_trial_3/']
+    output_paths = ['/data/sushen/marinedebris/project/floObj_shapefiles_trial_1/', '/data/sushen/marinedebris/project/floObj_shapefiles_trial_2/', '/data/sushen/marinedebris/project/floObj_shapefiles_trial_3/', '/data/sushen/marinedebris/project/floObj_shapefiles_trial_4/']
     output_path = output_paths[classifier_index]
 
     # Remove l2a files
     list_tif = [ x for x in list_tif if "l2a" not in x ]
 
     # Random forest Classifier
-    cl_paths = ['/data/sushen/marinedebris/project/rf_classifier_trial_1.joblib', '/data/sushen/marinedebris/project/rf_classifier_trial_2.joblib', '/data/sushen/marinedebris/project/rf_classifier_trial_3.joblib']
+    cl_paths = ['/data/sushen/marinedebris/project/rf_classifier_trial_1.joblib', '/data/sushen/marinedebris/project/rf_classifier_trial_2.joblib', '/data/sushen/marinedebris/project/rf_classifier_trial_3.joblib', '/data/sushen/marinedebris/project/rf_classifier_trial_4.joblib']
     cl_path = cl_paths[classifier_index]
     rf_classifier = load(cl_path)
 

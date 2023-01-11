@@ -19,16 +19,16 @@ np.random.seed(0)
 root_path = up(up(up(os.path.abspath(__file__))))
 data_path = '/data/sushen/marinedebris/project'
 
-dataset_index = 2 # 0 for original classes, 1 for five classes, 2 for seven classes
+dataset_index = 3 # 0 for original classes, 1 for five classes, 2 for seven classes
 
-hdf_paths = ['dataset_trial_1_original_classes.h5', 'dataset_trial_2_five_classes.h5', 'dataset_trial_3_seven_classes.h5']
+hdf_paths = ['dataset_trial_1_original_classes.h5', 'dataset_trial_2_five_classes.h5', 'dataset_trial_3_seven_classes.h5', 'dataset_trial_4_five_classes.h5']
 hdf_path = os.path.join(data_path, hdf_paths[dataset_index])
 
-cl_paths = ['rf_classifier_trial_1.joblib', 'rf_classifier_trial_2.joblib', 'rf_classifier_trial_3.joblib']
+cl_paths = ['rf_classifier_trial_1.joblib', 'rf_classifier_trial_2.joblib', 'rf_classifier_trial_3.joblib', 'rf_classifier_trial_4.joblib']
 cl_path = os.path.join(data_path, cl_paths[dataset_index])
 
 # Logging
-logging_paths = ['evaluation_rf_trial_1.log', 'evaluation_rf_trial_2.log', 'evaluation_rf_trial_3.log']
+logging_paths = ['evaluation_rf_trial_1.log', 'evaluation_rf_trial_2.log', 'evaluation_rf_trial_3.log', 'evaluation_rf_trial_4.log']
 logging_path = os.path.join(data_path, logging_paths[dataset_index])
 
 logging.basicConfig(filename=logging_path, filemode='w',level=logging.INFO, format='%(name)s - %(levelname)s - %(message)s')
