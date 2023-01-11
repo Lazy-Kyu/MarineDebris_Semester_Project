@@ -11,7 +11,6 @@ from tqdm import tqdm
 from os.path import dirname as up
 sys.path.append('/home/sushen/marine_debris_semester_project')
 from data.utils_file import read_tif_image, pad
-import model.random_forest.engineering_patches as eng
 
 from feature_extraction import calculate_indices, calculate_texture
 from data.utils_file import pad

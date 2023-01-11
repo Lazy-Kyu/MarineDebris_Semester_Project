@@ -10,7 +10,7 @@ import numpy as np
 from tqdm import tqdm
 from joblib import load
 
-from shapely.geometry import LineString, Polygon
+from shapely.geometry import Polygon
 
 sys.path.append('/home/sushen/marine_debris_semester_project')
 
